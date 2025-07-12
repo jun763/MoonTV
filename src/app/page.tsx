@@ -140,6 +140,7 @@ function HomeClient() {
             <>
               <ContinueWatching />
 
+              {/* 推荐板块渲染 */}
               {[
                 { title: '最新上映', filter: () => true },
                 { title: '动作片精选', filter: (i: any) => i.type_name === '动作片' },
@@ -157,7 +158,7 @@ function HomeClient() {
                           title={item.vod_name}
                           poster={item.vod_pic}
                           rate={item.vod_remarks}
-                          from='search'
+                          from='recommend'
                         />
                       </div>
                     ))}
