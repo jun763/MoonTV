@@ -95,7 +95,6 @@ function HomeClient() {
   return (
     <PageLayout>
       <div className='px-2 sm:px-10 py-4 sm:py-8 overflow-visible'>
-        {/* 顶部标签切换 */}
         <div className='mb-8 flex justify-center'>
           <CapsuleSwitch
             options={[
@@ -111,9 +110,7 @@ function HomeClient() {
           {activeTab === 'favorites' ? (
             <section className='mb-8'>
               <div className='mb-4 flex items-center justify-between'>
-                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                  我的收藏
-                </h2>
+                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>我的收藏</h2>
                 {favoriteItems.length > 0 && (
                   <button
                     className='text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
@@ -129,11 +126,7 @@ function HomeClient() {
               <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
                 {favoriteItems.map((item) => (
                   <div key={item.id + item.source} className='w-full'>
-                    <VideoCard
-                      query={item.search_title}
-                      {...item}
-                      from='favorite'
-                    />
+                    <VideoCard query={item.search_title} {...item} from='favorite' />
                   </div>
                 ))}
                 {favoriteItems.length === 0 && (
@@ -147,39 +140,18 @@ function HomeClient() {
             <>
               <ContinueWatching />
 
-              {/* 推荐区：最新上映 */}
-              <section className='mb-8'>
-                <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    最新上映
-                  </h2>
-                </div>
-                <ScrollableRow>
-                  {recommendList.slice(0, 12).map((item, index) => (
-                    <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                      <VideoCard
-                        title={item.vod_name}
-                        poster={item.vod_pic}
-                        rate={item.vod_remarks}
-                        from='recommend'
-                      />
-                    </div>
-                  ))}
-                </ScrollableRow>
-              </section>
-
-              {/* 推荐区：动作片精选 */}
-              <section className='mb-8'>
-                <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    动作片精选
-                  </h2>
-                </div>
-                <ScrollableRow>
-                  {recommendList
-                    .filter(item => item.type_name === '动作片')
-                    .slice(0, 12)
-                    .map((item, index) => (
+              {[
+                { title: '最新上映', filter: () => true },
+                { title: '动作片精选', filter: (i: any) => i.type_name === '动作片' },
+                { title: '科幻片精选', filter: (i: any) => i.type_name === '科幻片' },
+                { title: '搞笑片精选', filter: (i: any) => i.type_name === '喜剧片' },
+              ].map(({ title, filter }, idx) => (
+                <section key={idx} className='mb-8'>
+                  <div className='mb-4'>
+                    <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>{title}</h2>
+                  </div>
+                  <ScrollableRow>
+                    {recommendList.filter(filter).slice(0, 12).map((item, index) => (
                       <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
                         <VideoCard
                           title={item.vod_name}
@@ -189,56 +161,9 @@ function HomeClient() {
                         />
                       </div>
                     ))}
-                </ScrollableRow>
-              </section>
-
-              {/* 推荐区：科幻片精选 */}
-              <section className='mb-8'>
-                <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    科幻片精选
-                  </h2>
-                </div>
-                <ScrollableRow>
-                  {recommendList
-                    .filter(item => item.type_name === '科幻片')
-                    .slice(0, 12)
-                    .map((item, index) => (
-                      <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                        <VideoCard
-                          title={item.vod_name}
-                          poster={item.vod_pic}
-                          rate={item.vod_remarks}
-                          from='recommend'
-                        />
-                      </div>
-                    ))}
-                </ScrollableRow>
-              </section>
-
-              {/* 推荐区：搞笑片精选 */}
-              <section className='mb-8'>
-                <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    搞笑片精选
-                  </h2>
-                </div>
-                <ScrollableRow>
-                  {recommendList
-                    .filter(item => item.type_name === '喜剧片')
-                    .slice(0, 12)
-                    .map((item, index) => (
-                      <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                        <VideoCard
-                          title={item.vod_name}
-                          poster={item.vod_pic}
-                          rate={item.vod_remarks}
-                          from='recommend'
-                        />
-                      </div>
-                    ))}
-                </ScrollableRow>
-              </section>
+                  </ScrollableRow>
+                </section>
+              ))}
             </>
           )}
         </div>
@@ -247,4 +172,21 @@ function HomeClient() {
           <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4'>
             <div className='w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900'>
               <div className='flex justify-between items-start mb-4'>
-                <h3 className='text
+                <h3 className='text-2xl font-bold text-gray-800 dark:text-white'>提示</h3>
+                <button
+                  onClick={() => handleCloseAnnouncement(announcement)}
+                  className='text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300'
+                >
+                  关闭
+                </button>
+              </div>
+              <p className='text-gray-600 dark:text-gray-300 whitespace-pre-wrap'>{announcement}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </PageLayout>
+  );
+}
+
+export default HomeClient;
