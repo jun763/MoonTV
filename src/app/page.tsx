@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import PageLayout from '@/components/PageLayout';
@@ -147,24 +147,33 @@ function HomeClient() {
             <>
               <ContinueWatching />
 
-              {/* 最新上映 */}
+              {/* 推荐区：最新上映 */}
               <section className='mb-8'>
                 <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>最新上映</h2>
+                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                    最新上映
+                  </h2>
                 </div>
                 <ScrollableRow>
                   {recommendList.slice(0, 12).map((item, index) => (
                     <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                      <VideoCard title={item.vod_name} poster={item.vod_pic} rate={item.vod_remarks} from='recommend' />
+                      <VideoCard
+                        title={item.vod_name}
+                        poster={item.vod_pic}
+                        rate={item.vod_remarks}
+                        from='recommend'
+                      />
                     </div>
                   ))}
                 </ScrollableRow>
               </section>
 
-              {/* 动作片精选 */}
+              {/* 推荐区：动作片精选 */}
               <section className='mb-8'>
                 <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>动作片精选</h2>
+                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                    动作片精选
+                  </h2>
                 </div>
                 <ScrollableRow>
                   {recommendList
@@ -172,16 +181,23 @@ function HomeClient() {
                     .slice(0, 12)
                     .map((item, index) => (
                       <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                        <VideoCard title={item.vod_name} poster={item.vod_pic} rate={item.vod_remarks} from='recommend' />
+                        <VideoCard
+                          title={item.vod_name}
+                          poster={item.vod_pic}
+                          rate={item.vod_remarks}
+                          from='recommend'
+                        />
                       </div>
                     ))}
                 </ScrollableRow>
               </section>
 
-              {/* 科幻片精选 */}
+              {/* 推荐区：科幻片精选 */}
               <section className='mb-8'>
                 <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>科幻片精选</h2>
+                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                    科幻片精选
+                  </h2>
                 </div>
                 <ScrollableRow>
                   {recommendList
@@ -189,16 +205,23 @@ function HomeClient() {
                     .slice(0, 12)
                     .map((item, index) => (
                       <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                        <VideoCard title={item.vod_name} poster={item.vod_pic} rate={item.vod_remarks} from='recommend' />
+                        <VideoCard
+                          title={item.vod_name}
+                          poster={item.vod_pic}
+                          rate={item.vod_remarks}
+                          from='recommend'
+                        />
                       </div>
                     ))}
                 </ScrollableRow>
               </section>
 
-              {/* 搞笑片精选 */}
+              {/* 推荐区：搞笑片精选 */}
               <section className='mb-8'>
                 <div className='mb-4'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>搞笑片精选</h2>
+                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                    搞笑片精选
+                  </h2>
                 </div>
                 <ScrollableRow>
                   {recommendList
@@ -206,7 +229,12 @@ function HomeClient() {
                     .slice(0, 12)
                     .map((item, index) => (
                       <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                        <VideoCard title={item.vod_name} poster={item.vod_pic} rate={item.vod_remarks} from='recommend' />
+                        <VideoCard
+                          title={item.vod_name}
+                          poster={item.vod_pic}
+                          rate={item.vod_remarks}
+                          from='recommend'
+                        />
                       </div>
                     ))}
                 </ScrollableRow>
@@ -219,7 +247,4 @@ function HomeClient() {
           <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4'>
             <div className='w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900'>
               <div className='flex justify-between items-start mb-4'>
-                <h3 className='text-2xl font-bold text-gray-800 dark:text-white'>提示</h3>
-                <button
-                  onClick={() => handleCloseAnnouncement(announcement)}
-                  className='text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text
+                <h3 className='text
