@@ -157,7 +157,7 @@ function HomeClient() {
                           title={item.vod_name}
                           poster={item.vod_pic}
                           rate={item.vod_remarks}
-                          from='recommend'
+                          from='search'
                         />
                       </div>
                     ))}
