@@ -4,11 +4,13 @@ import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 
+// 客户端收藏 API
 import {
   clearAllFavorites,
   getAllFavorites,
   getAllPlayRecords,
 } from '@/lib/db.client';
+import { DoubanItem, DoubanResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
@@ -19,66 +21,89 @@ import VideoCard from '@/components/VideoCard';
 
 function HomeClient() {
   const [activeTab, setActiveTab] = useState<'home' | 'favorites'>('home');
-  const [hotMovies, setHotMovies] = useState<any[]>([]);
-  const [hotTvShows, setHotTvShows] = useState<any[]>([]);
+  const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
+  const [hotTvShows, setHotTvShows] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { announcement } = useSite();
+
   const [showAnnouncement, setShowAnnouncement] = useState(false);
 
+  // 检查公告弹窗状态
   useEffect(() => {
     if (typeof window !== 'undefined' && announcement) {
-      const hasSeen = localStorage.getItem('hasSeenAnnouncement');
-      if (hasSeen !== announcement) {
+      const hasSeenAnnouncement = localStorage.getItem('hasSeenAnnouncement');
+      if (hasSeenAnnouncement !== announcement) {
         setShowAnnouncement(true);
       } else {
-        setShowAnnouncement(Boolean(!hasSeen && announcement));
+        setShowAnnouncement(Boolean(!hasSeenAnnouncement && announcement));
       }
     }
   }, [announcement]);
 
-  const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
+  // 收藏夹数据
+  type FavoriteItem = {
+    id: string;
+    source: string;
+    title: string;
+    poster: string;
+    episodes: number;
+    source_name: string;
+    currentEpisode?: number;
+    search_title?: string;
+  };
+
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
 
   useEffect(() => {
-    const fetchWolongZYData = async () => {
+    const fetchDoubanData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          'https://wolongzyw.com/api.php/provide/vod?order=hits&page=1'
-        );
-        const data = await res.json();
-        const list: any[] = data.list || [];
 
-        setHotMovies(list.filter(i => i.type_name === '电影').slice(0, 12));
-        setHotTvShows(
-          list.filter(i =>
-            ['国产剧', '海外剧', '韩剧', '美剧', '日剧'].includes(i.type_name)
-          ).slice(0, 12)
-        );
-      } catch (err) {
-        console.error('热门内容加载失败:', err);
+        // 并行获取热门电影和热门剧集
+        const [moviesResponse, tvShowsResponse] = await Promise.all([
+          fetch('/api/douban?type=movie&tag=热门'),
+          fetch('/api/douban?type=tv&tag=热门'),
+        ]);
+
+        if (moviesResponse.ok) {
+          const moviesData: DoubanResult = await moviesResponse.json();
+          setHotMovies(moviesData.list);
+        }
+
+        if (tvShowsResponse.ok) {
+          const tvShowsData: DoubanResult = await tvShowsResponse.json();
+          setHotTvShows(tvShowsData.list);
+        }
       } finally {
         setLoading(false);
       }
     };
-    fetchWolongZYData();
+
+    fetchDoubanData();
   }, []);
 
+  // 当切换到收藏夹时加载收藏数据
   useEffect(() => {
     if (activeTab !== 'favorites') return;
+
     (async () => {
       const [allFavorites, allPlayRecords] = await Promise.all([
         getAllFavorites(),
         getAllPlayRecords(),
       ]);
 
+      // 根据保存时间排序（从近到远）
       const sorted = Object.entries(allFavorites)
         .sort(([, a], [, b]) => b.save_time - a.save_time)
         .map(([key, fav]) => {
           const plusIndex = key.indexOf('+');
           const source = key.slice(0, plusIndex);
           const id = key.slice(plusIndex + 1);
+
+          // 查找对应的播放记录，获取当前集数
           const playRecord = allPlayRecords[key];
           const currentEpisode = playRecord?.index;
+
           return {
             id,
             source,
@@ -89,7 +114,7 @@ function HomeClient() {
             source_name: fav.source_name,
             currentEpisode,
             search_title: fav?.search_title,
-          };
+          } as FavoriteItem;
         });
       setFavoriteItems(sorted);
     })();
@@ -97,12 +122,13 @@ function HomeClient() {
 
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
-    localStorage.setItem('hasSeenAnnouncement', announcement);
+    localStorage.setItem('hasSeenAnnouncement', announcement); // 记录已查看弹窗
   };
 
   return (
     <PageLayout>
       <div className='px-2 sm:px-10 py-4 sm:py-8 overflow-visible'>
+        {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
           <CapsuleSwitch
             options={[
@@ -116,9 +142,12 @@ function HomeClient() {
 
         <div className='max-w-[95%] mx-auto'>
           {activeTab === 'favorites' ? (
+            // 收藏夹视图
             <section className='mb-8'>
               <div className='mb-4 flex items-center justify-between'>
-                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>我的收藏</h2>
+                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                  我的收藏
+                </h2>
                 {favoriteItems.length > 0 && (
                   <button
                     className='text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
@@ -134,7 +163,11 @@ function HomeClient() {
               <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:px-4'>
                 {favoriteItems.map((item) => (
                   <div key={item.id + item.source} className='w-full'>
-                    <VideoCard query={item.search_title} {...item} from='favorite' />
+                    <VideoCard
+                      query={item.search_title}
+                      {...item}
+                      from='favorite'
+                    />
                   </div>
                 ))}
                 {favoriteItems.length === 0 && (
@@ -145,65 +178,97 @@ function HomeClient() {
               </div>
             </section>
           ) : (
+            // 首页视图
             <>
+              {/* 继续观看 */}
               <ContinueWatching />
 
+              {/* 热门电影 */}
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>热门电影</h2>
+                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                    热门电影
+                  </h2>
                   <Link
-                    href='/search?type=movie'
+                    href='/douban?type=movie&tag=热门&title=热门电影'
                     className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                   >
-                    查看更多 <ChevronRight className='w-4 h-4 ml-1' />
+                    查看更多
+                    <ChevronRight className='w-4 h-4 ml-1' />
                   </Link>
                 </div>
                 <ScrollableRow>
                   {loading
-                    ? Array.from({ length: 8 }).map((_, index) => (
-                        <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'></div>
+                    ? // 加载状态显示灰色占位数据
+                      Array.from({ length: 8 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        >
+                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
+                            <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
+                          </div>
                           <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
                         </div>
                       ))
-                    : hotMovies.map((movie, index) => (
-                        <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
+                    : // 显示真实数据
+                      hotMovies.map((movie, index) => (
+                        <div
+                          key={index}
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        >
                           <VideoCard
-                            from='search'
-                            title={movie.vod_name}
-                            poster={movie.vod_pic}
-                            rate={movie.vod_remarks}
+                            from='douban'
+                            title={movie.title}
+                            poster={movie.poster}
+                            douban_id={movie.id}
+                            rate={movie.rate}
                           />
                         </div>
                       ))}
                 </ScrollableRow>
               </section>
 
+              {/* 热门剧集 */}
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>热门剧集</h2>
+                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                    热门剧集
+                  </h2>
                   <Link
-                    href='/search?type=tv'
+                    href='/douban?type=tv&tag=热门&title=热门剧集'
                     className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                   >
-                    查看更多 <ChevronRight className='w-4 h-4 ml-1' />
+                    查看更多
+                    <ChevronRight className='w-4 h-4 ml-1' />
                   </Link>
                 </div>
                 <ScrollableRow>
                   {loading
-                    ? Array.from({ length: 8 }).map((_, index) => (
-                        <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'></div>
+                    ? // 加载状态显示灰色占位数据
+                      Array.from({ length: 8 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        >
+                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
+                            <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
+                          </div>
                           <div className='mt-2 h-4 bg-gray-200 rounded animate-pulse dark:bg-gray-800'></div>
                         </div>
                       ))
-                    : hotTvShows.map((show, index) => (
-                        <div key={index} className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
+                    : // 显示真实数据
+                      hotTvShows.map((show, index) => (
+                        <div
+                          key={index}
+                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        >
                           <VideoCard
-                            from='search'
-                            title={show.vod_name}
-                            poster={show.vod_pic}
-                            rate={show.vod_remarks}
+                            from='douban'
+                            title={show.title}
+                            poster={show.poster}
+                            douban_id={show.id}
+                            rate={show.rate}
                           />
                         </div>
                       ))}
@@ -212,4 +277,49 @@ function HomeClient() {
             </>
           )}
         </div>
-      </div
+      </div>
+      {announcement && showAnnouncement && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${
+            showAnnouncement ? '' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className='w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900 transform transition-all duration-300 hover:shadow-2xl'>
+            <div className='flex justify-between items-start mb-4'>
+              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-green-500 pb-1'>
+                提示
+              </h3>
+              <button
+                onClick={() => handleCloseAnnouncement(announcement)}
+                className='text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-white transition-colors'
+                aria-label='关闭'
+              ></button>
+            </div>
+            <div className='mb-6'>
+              <div className='relative overflow-hidden rounded-lg mb-4 bg-green-50 dark:bg-green-900/20'>
+                <div className='absolute inset-y-0 left-0 w-1.5 bg-green-500 dark:bg-green-400'></div>
+                <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>
+                  {announcement}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleCloseAnnouncement(announcement)}
+              className='w-full rounded-lg bg-gradient-to-r from-green-600 to-green-700 px-4 py-3 text-white font-medium shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 transition-all duration-300 transform hover:-translate-y-0.5'
+            >
+              我知道了
+            </button>
+          </div>
+        </div>
+      )}
+    </PageLayout>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeClient />
+    </Suspense>
+  );
+}
